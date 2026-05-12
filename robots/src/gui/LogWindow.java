@@ -3,10 +3,8 @@ package gui;
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
 import java.awt.TextArea;
-
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
-
 import log.LogChangeListener;
 import log.LogEntry;
 import log.LogWindowSource;
@@ -20,8 +18,8 @@ public class LogWindow extends JInternalFrame implements LogChangeListener
     {
         super("Протокол работы", true, true, true, true);
         m_logSource = logSource;
-        m_logSource.registerListener(this);
-        m_logContent = new TextArea("");
+        m_logSource.registerListener(this); //регистрируем окно в качестве слушателя изменений в источнике логов, чтобы получать уведомления о новых записях в логе и обновлять отображаемое содержимое
+        m_logContent = new TextArea(""); 
         m_logContent.setSize(200, 500);
         
         JPanel panel = new JPanel(new BorderLayout());

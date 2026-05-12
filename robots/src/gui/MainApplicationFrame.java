@@ -3,17 +3,18 @@ package gui;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
-
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-
 import log.Logger;
 
 /**
@@ -24,32 +25,39 @@ import log.Logger;
  */
 public class MainApplicationFrame extends JFrame
 {
-    private final JDesktopPane desktopPane = new JDesktopPane();
+    private final JDesktopPane desktopPane = new JDesktopPane();  //главная панель, на которой располагаются внутренние окна приложения (лог, игровое поле и т.д.)
     
     public MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge
         //of the screen.
         int inset = 50;        
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize(); 
         setBounds(inset, inset,
             screenSize.width  - inset*2,
             screenSize.height - inset*2);
 
-        setContentPane(desktopPane);
+        setContentPane(desktopPane); //устанавливаем главную панель в качестве панели содержимого окна
         
         
-        LogWindow logWindow = createLogWindow();
+        LogWindow logWindow = createLogWindow(); //создаем окно для отображения логов приложения
         addWindow(logWindow);
 
-        GameWindow gameWindow = new GameWindow();
+        GameWindow gameWindow = new GameWindow(); //создаем окно для отображения игрового поля и управления игрой
+        gameWindow.setLocation(310,10);
         gameWindow.setSize(400,  400);
         addWindow(gameWindow);
 
         setJMenuBar(generateMenuBar());
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE); //устанавливаем поведение при закрытии окна - не закрывать окно автоматически, а обрабатывать это событие вручную, чтобы показать диалог подтверждения выхода из приложения
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                exitRequested();
+            }
+        }); //добавляем слушатель событий окна, вызываетсмя при потытке закрыть окно
     }
     
-    protected LogWindow createLogWindow()
+    protected LogWindow createLogWindow() //создаем окно для отображения логов приложения
     {
         LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
         logWindow.setLocation(10,10);
@@ -98,43 +106,55 @@ public class MainApplicationFrame extends JFrame
     private JMenuBar generateMenuBar()
     {
         JMenuBar menuBar = new JMenuBar();
+
+        JMenu fileMenu = new JMenu("Файл");
+        fileMenu.setMnemonic(KeyEvent.VK_F);
+        fileMenu.getAccessibleContext().setAccessibleDescription(
+                "Действия приложения"); 
+
+        {
+            JMenuItem exitItem = new JMenuItem("Выход", KeyEvent.VK_X);
+            exitItem.addActionListener((event) -> exitRequested()); //добавляем обработчик событий для пункта меню, который будет завершать работу приложения при выборе этого пункта
+            fileMenu.add(exitItem);
+        }
         
-        JMenu lookAndFeelMenu = new JMenu("Режим отображения");
-        lookAndFeelMenu.setMnemonic(KeyEvent.VK_V);
+        JMenu lookAndFeelMenu = new JMenu("Режим отображения"); //меню для управления режимом отображения приложения (стилем компонентов Swing)
+        lookAndFeelMenu.setMnemonic(KeyEvent.VK_V); 
         lookAndFeelMenu.getAccessibleContext().setAccessibleDescription(
-                "Управление режимом отображения приложения");
+                "Управление режимом отображения приложения"); 
         
         {
-            JMenuItem systemLookAndFeel = new JMenuItem("Системная схема", KeyEvent.VK_S);
+            JMenuItem systemLookAndFeel = new JMenuItem("Системная схема", KeyEvent.VK_S); 
             systemLookAndFeel.addActionListener((event) -> {
-                setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); 
                 this.invalidate();
-            });
+            }); //добавляем обработчик событий для пункта меню, который будет устанавливать системный стиль отображения компонентов Swing и обновлять интерфейс
             lookAndFeelMenu.add(systemLookAndFeel);
         }
 
         {
-            JMenuItem crossplatformLookAndFeel = new JMenuItem("Универсальная схема", KeyEvent.VK_S);
+            JMenuItem crossplatformLookAndFeel = new JMenuItem("Универсальная схема", KeyEvent.VK_S); 
             crossplatformLookAndFeel.addActionListener((event) -> {
-                setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+                setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName()); 
                 this.invalidate();
             });
             lookAndFeelMenu.add(crossplatformLookAndFeel);
         }
 
-        JMenu testMenu = new JMenu("Тесты");
+        JMenu testMenu = new JMenu("Тесты"); //меню для тестирования функционала приложения (например, добавление сообщений в лог)
         testMenu.setMnemonic(KeyEvent.VK_T);
         testMenu.getAccessibleContext().setAccessibleDescription(
-                "Тестовые команды");
+                "Тестовые команды"); 
         
         {
             JMenuItem addLogMessageItem = new JMenuItem("Сообщение в лог", KeyEvent.VK_S);
             addLogMessageItem.addActionListener((event) -> {
-                Logger.debug("Новая строка");
+                Logger.debug("Новая строка"); 
             });
             testMenu.add(addLogMessageItem);
         }
 
+        menuBar.add(fileMenu);
         menuBar.add(lookAndFeelMenu);
         menuBar.add(testMenu);
         return menuBar;
@@ -151,6 +171,25 @@ public class MainApplicationFrame extends JFrame
             | IllegalAccessException | UnsupportedLookAndFeelException e)
         {
             // just ignore
+        }
+    }
+
+    private void exitRequested()
+    {
+        String[] options = { "Да", "Нет" };
+        int choice = JOptionPane.showOptionDialog(
+                this,
+                "Выйти из приложения?",
+                "Подтверждение выхода",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[1]); //показываем диалоговое окно с вопросом о подтверждении выхода из приложения и получаем выбор пользователя (да или нет)
+        if (choice == JOptionPane.YES_OPTION)
+        {
+            dispose();
+            System.exit(0);
         }
     }
 }

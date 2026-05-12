@@ -10,12 +10,11 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import javax.swing.JPanel;
 
 public class GameVisualizer extends JPanel
 {
-    private final Timer m_timer = initTimer();
+    private final Timer m_timer = initTimer(); //инициализируем таймер, который будет использоваться для генерации событий перерисовки панели и обновления модели робота
     
     private static Timer initTimer() 
     {
@@ -40,7 +39,7 @@ public class GameVisualizer extends JPanel
             @Override
             public void run()
             {
-                onRedrawEvent();
+                onRedrawEvent(); //запускаем таймер, который будет вызывать событие перерисовки панели каждые 50 миллисекунд
             }
         }, 0, 50);
         m_timer.schedule(new TimerTask()
@@ -48,7 +47,7 @@ public class GameVisualizer extends JPanel
             @Override
             public void run()
             {
-                onModelUpdateEvent();
+                onModelUpdateEvent(); //запускаем таймер, который будет вызывать событие обновления модели робота каждые 10 миллисекунд
             }
         }, 0, 10);
         addMouseListener(new MouseAdapter()
@@ -59,7 +58,7 @@ public class GameVisualizer extends JPanel
                 setTargetPosition(e.getPoint());
                 repaint();
             }
-        });
+        }); //добавляем обработчик событий мыши, который будет вызываться при клике на панели и устанавливать новую целевую позицию для робота
         setDoubleBuffered(true);
     }
 
