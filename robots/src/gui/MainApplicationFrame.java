@@ -5,6 +5,8 @@ import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Locale;
+import javax.swing.JComponent;
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -55,6 +57,38 @@ public class MainApplicationFrame extends JFrame
                 exitRequested();
             }
         }); //добавляем слушатель событий окна, вызываетсмя при потытке закрыть окно
+    }
+
+    public static void configureLocale()
+    {
+        Locale ru = new Locale("ru", "RU"); //создаем объект Locale для русского языка и России, который будет использоваться для настройки локализации приложения
+        Locale.setDefault(ru); // по умолчанию русская локализация
+        JComponent.setDefaultLocale(ru); // устанавливаем русскую локализацию для компонентов Swing
+        UIManager.getDefaults().setDefaultLocale(ru);
+    }
+
+    public static void configureRussianUiTexts()
+    {
+        UIManager.put("OptionPane.yesButtonText", "Да"); //настраиваем русские тексты для стандартных диалогов Swing 
+        UIManager.put("OptionPane.noButtonText", "Нет");
+        UIManager.put("OptionPane.cancelButtonText", "Отмена");
+        UIManager.put("OptionPane.okButtonText", "Ок");
+
+        UIManager.put("FileChooser.openButtonText", "Открыть");
+        UIManager.put("FileChooser.saveButtonText", "Сохранить");
+        UIManager.put("FileChooser.cancelButtonText", "Отмена");
+        UIManager.put("FileChooser.lookInLabelText", "Папка");
+        UIManager.put("FileChooser.fileNameLabelText", "Имя файла");
+        UIManager.put("FileChooser.filesOfTypeLabelText", "Тип файлов");
+        UIManager.put("FileChooser.upFolderToolTipText", "На уровень вверх");
+        UIManager.put("FileChooser.homeFolderToolTipText", "Домашняя папка");
+        UIManager.put("FileChooser.newFolderToolTipText", "Новая папка");
+        UIManager.put("FileChooser.listViewButtonToolTipText", "Список");
+        UIManager.put("FileChooser.detailsViewButtonToolTipText", "Таблица");
+
+        UIManager.put("ColorChooser.okText", "Ок");
+        UIManager.put("ColorChooser.cancelText", "Отмена");
+        UIManager.put("ColorChooser.resetText", "Сброс");
     }
     
     protected LogWindow createLogWindow() //создаем окно для отображения логов приложения
@@ -176,16 +210,12 @@ public class MainApplicationFrame extends JFrame
 
     private void exitRequested()
     {
-        String[] options = { "Да", "Нет" };
-        int choice = JOptionPane.showOptionDialog(
-                this,
-                "Выйти из приложения?",
-                "Подтверждение выхода",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                options,
-                options[1]); //показываем диалоговое окно с вопросом о подтверждении выхода из приложения и получаем выбор пользователя (да или нет)
+        int choice = JOptionPane.showConfirmDialog(
+            this,
+            "Выйти из приложения?",
+            "Подтверждение выхода",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE); //показываем диалоговое окно с вопросом о подтверждении выхода из приложения и получаем выбор пользователя (да или нет)
         if (choice == JOptionPane.YES_OPTION)
         {
             dispose();

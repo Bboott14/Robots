@@ -7,6 +7,7 @@ import javax.swing.UIManager;
 public class RobotsProgram
 {
     public static void main(String[] args) {
+      MainApplicationFrame.configureLocale();
       try {
         UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel"); //стиль компонентов Swing (кнопки, меню, окна)
 //        UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
@@ -15,6 +16,7 @@ public class RobotsProgram
       } catch (Exception e) {
         e.printStackTrace();
       }
+      MainApplicationFrame.configureRussianUiTexts();
       SwingUtilities.invokeLater(() -> { //запускаем код, который создает и отображает окно, в потоке обработки событий Swing (Event Dispatch Thread)
         MainApplicationFrame frame = new MainApplicationFrame(); //создаем экземпляр главного окна приложения
         frame.pack();
