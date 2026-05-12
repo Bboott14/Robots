@@ -7,7 +7,7 @@ import javax.swing.UIManager;
 public class RobotsProgram
 {
     public static void main(String[] args) {
-      MainApplicationFrame.configureLocale();
+      MainApplicationFrame.configureLocale(); //настраиваем локализацию приложения на русский, чтобы все компоненты и диалоги отображались на русском языке
       try {
         UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel"); //стиль компонентов Swing (кнопки, меню, окна)
 //        UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
