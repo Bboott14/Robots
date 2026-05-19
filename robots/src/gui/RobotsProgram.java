@@ -19,8 +19,11 @@ public class RobotsProgram
       MainApplicationFrame.configureRussianUiTexts();
       SwingUtilities.invokeLater(() -> { //запускаем код, который создает и отображает окно, в потоке обработки событий Swing (Event Dispatch Thread)
         MainApplicationFrame frame = new MainApplicationFrame(); //создаем экземпляр главного окна приложения
-        frame.pack();
+        if (!WindowStateManager.hasSavedWindowState())
+        {
+          frame.pack();
+          frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+        }
         frame.setVisible(true);
-        frame.setExtendedState(Frame.MAXIMIZED_BOTH);
       });
     }}

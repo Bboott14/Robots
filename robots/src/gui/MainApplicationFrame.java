@@ -1,22 +1,18 @@
 package gui;
 
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.Toolkit;
-import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyVetoException;
 import java.util.Locale;
 import javax.swing.JComponent;
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import log.Logger;
 
 /**
@@ -28,6 +24,9 @@ import log.Logger;
 public class MainApplicationFrame extends JFrame
 {
     private final JDesktopPane desktopPane = new JDesktopPane();  //главная панель, на которой располагаются внутренние окна приложения 
+    private LogWindow logWindow;
+    private GameWindow gameWindow;
+    private final WindowStateManager windowStateManager;
     
     public MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge
@@ -41,13 +40,17 @@ public class MainApplicationFrame extends JFrame
         setContentPane(desktopPane); //устанавливаем главную панель в качестве панели содержимого окна
         
         
-        LogWindow logWindow = createLogWindow(); //создаем окно для отображения логов приложения
+        logWindow = createLogWindow(); //создаем окно для отображения логов приложения
         addWindow(logWindow);
 
-        GameWindow gameWindow = createGameWindow(); //создаем окно для отображения игрового поля и управления игрой
+        gameWindow = createGameWindow(); //создаем окно для отображения игрового поля и управления игрой
         addWindow(gameWindow);
 
-        setJMenuBar(generateMenuBar());
+        windowStateManager = new WindowStateManager(this, logWindow, gameWindow);
+        windowStateManager.restoreWindowState(); //восстанавливаем сохраненное состояние окон приложения
+
+        MenuBuilder menuBuilder = new MenuBuilder(this, this::resetWindowState, this::exitRequested);
+        setJMenuBar(menuBuilder.createMenuBar());
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE); //устанавливаем поведение при закрытии окна - не закрывать окно автоматически, а обрабатывать это событие вручную, чтобы показать диалог подтверждения выхода из приложения
         addWindowListener(new WindowAdapter() {
             @Override
@@ -142,80 +145,6 @@ public class MainApplicationFrame extends JFrame
 // 
 //        return menuBar;
 //    }
-    
-    private JMenuBar generateMenuBar()
-    {
-        JMenuBar menuBar = new JMenuBar();
-        menuBar.add(createFileMenu());
-        menuBar.add(createLookAndFeelMenu());
-        menuBar.add(createTestMenu());
-        return menuBar;
-    }
-
-    private JMenu createFileMenu()
-    {
-        JMenu fileMenu = new JMenu("Файл");
-        fileMenu.setMnemonic(KeyEvent.VK_F);
-        fileMenu.getAccessibleContext().setAccessibleDescription(
-                "Действия приложения");
-
-        JMenuItem exitItem = new JMenuItem("Выход", KeyEvent.VK_X);
-        exitItem.addActionListener((event) -> exitRequested());
-        fileMenu.add(exitItem);
-        return fileMenu;
-    }
-
-    private JMenu createLookAndFeelMenu()
-    {
-        JMenu lookAndFeelMenu = new JMenu("Режим отображения");
-        lookAndFeelMenu.setMnemonic(KeyEvent.VK_V);
-        lookAndFeelMenu.getAccessibleContext().setAccessibleDescription(
-                "Управление режимом отображения приложения");
-
-        JMenuItem systemLookAndFeel = new JMenuItem("Системная схема", KeyEvent.VK_S);
-        systemLookAndFeel.addActionListener((event) -> {
-            setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            this.invalidate();
-        });
-        lookAndFeelMenu.add(systemLookAndFeel);
-
-        JMenuItem crossplatformLookAndFeel = new JMenuItem("Универсальная схема", KeyEvent.VK_S);
-        crossplatformLookAndFeel.addActionListener((event) -> {
-            setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-            this.invalidate();
-        });
-        lookAndFeelMenu.add(crossplatformLookAndFeel);
-        return lookAndFeelMenu;
-    }
-
-    private JMenu createTestMenu()
-    {
-        JMenu testMenu = new JMenu("Тесты");
-        testMenu.setMnemonic(KeyEvent.VK_T);
-        testMenu.getAccessibleContext().setAccessibleDescription(
-                "Тестовые команды");
-
-        JMenuItem addLogMessageItem = new JMenuItem("Сообщение в лог", KeyEvent.VK_S);
-        addLogMessageItem.addActionListener((event) -> {
-            Logger.debug("Новая строка");
-        });
-        testMenu.add(addLogMessageItem);
-        return testMenu;
-    }
-    
-    private void setLookAndFeel(String className)
-    {
-        try
-        {
-            UIManager.setLookAndFeel(className);
-            SwingUtilities.updateComponentTreeUI(this);
-        }
-        catch (ClassNotFoundException | InstantiationException
-            | IllegalAccessException | UnsupportedLookAndFeelException e)
-        {
-            // just ignore
-        }
-    }
 
     private void exitRequested()
     {
@@ -227,8 +156,43 @@ public class MainApplicationFrame extends JFrame
             JOptionPane.QUESTION_MESSAGE); //показываем диалоговое окно с вопросом о подтверждении выхода из приложения и получаем выбор пользователя (да или нет)
         if (choice == JOptionPane.YES_OPTION)
         {
+            windowStateManager.saveWindowState(); //сохраняем состояние окон приложения 
             dispose();
             System.exit(0);
         }
+    }
+
+    private void resetWindowState() //сбрасываем состояние окон приложения к значениям по умолчанию и удаляем сохраненный файл состояния
+    {
+        resetMainFrameToDefaults();
+        resetInternalFrameToDefaults(logWindow, 10, 10, 300, 800);
+        setMinimumSize(logWindow.getSize());
+        resetInternalFrameToDefaults(gameWindow, 310, 10, 400, 400);
+        windowStateManager.clearSavedState();
+    }
+
+    private void resetMainFrameToDefaults()
+    {
+        int inset = 50;
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        setExtendedState(Frame.NORMAL);
+        setBounds(inset, inset,
+            screenSize.width  - inset * 2,
+            screenSize.height - inset * 2);
+    }
+
+    private void resetInternalFrameToDefaults(JInternalFrame frame, int x, int y, int w, int h) 
+    {
+        try
+        {
+            frame.setIcon(false);
+            frame.setMaximum(false);
+        }
+        catch (PropertyVetoException e)
+        {
+            // ignore
+        }
+        frame.setBounds(x, y, w, h);
+        frame.setVisible(true); 
     }
 }
