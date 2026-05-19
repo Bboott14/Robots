@@ -24,8 +24,10 @@ import log.Logger;
 public class MainApplicationFrame extends JFrame
 {
     private final JDesktopPane desktopPane = new JDesktopPane();  //главная панель, на которой располагаются внутренние окна приложения 
+    private RobotModel robotModel;
     private LogWindow logWindow;
     private GameWindow gameWindow;
+    private RobotCoordinatesWindow coordinatesWindow;
     private final WindowStateManager windowStateManager;
     
     public MainApplicationFrame() {
@@ -40,16 +42,21 @@ public class MainApplicationFrame extends JFrame
         setContentPane(desktopPane); //устанавливаем главную панель в качестве панели содержимого окна
         
         
+        robotModel = new RobotModel();
+
         logWindow = createLogWindow(); //создаем окно для отображения логов приложения
         addWindow(logWindow);
 
-        gameWindow = createGameWindow(); //создаем окно для отображения игрового поля и управления игрой
+        gameWindow = createGameWindow(robotModel); //создаем окно для отображения игрового поля и управления игрой
         addWindow(gameWindow);
 
-        windowStateManager = new WindowStateManager(this, logWindow, gameWindow);
+        coordinatesWindow = createCoordinatesWindow(robotModel);
+        addWindow(coordinatesWindow);
+
+        windowStateManager = new WindowStateManager(this, logWindow, gameWindow, coordinatesWindow);
         windowStateManager.restoreWindowState(); //восстанавливаем сохраненное состояние окон приложения
 
-        MenuBuilder menuBuilder = new MenuBuilder(this, this::resetWindowState, this::exitRequested);
+        MenuBuilder menuBuilder = new MenuBuilder(this, this::resetWindowState, this::exitRequested); //создаем объект MenuBuilder, который отвечает за создание меню приложения, передаем ему ссылки на методы для сброса состояния окон и выхода из приложения
         setJMenuBar(menuBuilder.createMenuBar());
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE); //устанавливаем поведение при закрытии окна - не закрывать окно автоматически, а обрабатывать это событие вручную, чтобы показать диалог подтверждения выхода из приложения
         addWindowListener(new WindowAdapter() {
@@ -103,12 +110,20 @@ public class MainApplicationFrame extends JFrame
         return logWindow;
     }
 
-    protected GameWindow createGameWindow() //создаем окно для отображения логов приложения
+    protected GameWindow createGameWindow(RobotModel model) //создаем окно для отображения игрового поля и управления игрой
     {
-        GameWindow gameWindow = new GameWindow(); //создаем окно для отображения игрового поля и управления игрой
+        GameWindow gameWindow = new GameWindow(model); //создаем окно для отображения игрового поля и управления игрой
         gameWindow.setLocation(310,10);
         gameWindow.setSize(400,  400);
         return gameWindow;
+    }
+
+    protected RobotCoordinatesWindow createCoordinatesWindow(RobotModel model)
+    {
+        RobotCoordinatesWindow coordinatesWindow = new RobotCoordinatesWindow(model);
+        coordinatesWindow.setLocation(310, 420);
+        coordinatesWindow.setSize(400, 120);
+        return coordinatesWindow;
     }
     
     protected void addWindow(JInternalFrame frame)
@@ -168,6 +183,7 @@ public class MainApplicationFrame extends JFrame
         resetInternalFrameToDefaults(logWindow, 10, 10, 300, 800);
         setMinimumSize(logWindow.getSize());
         resetInternalFrameToDefaults(gameWindow, 310, 10, 400, 400);
+        resetInternalFrameToDefaults(coordinatesWindow, 310, 420, 400, 120);
         windowStateManager.clearSavedState();
     }
 

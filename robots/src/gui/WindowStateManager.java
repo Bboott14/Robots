@@ -15,16 +15,20 @@ final class WindowStateManager
     private static final String MAIN_PREFIX = "main";
     private static final String LOG_PREFIX = "logWindow";
     private static final String GAME_PREFIX = "gameWindow";
+    private static final String COORDS_PREFIX = "coordsWindow";
 
     private final Frame mainFrame;
     private final JInternalFrame logWindow;
     private final JInternalFrame gameWindow;
+    private final JInternalFrame coordinatesWindow;
 
-    WindowStateManager(Frame mainFrame, JInternalFrame logWindow, JInternalFrame gameWindow)
+    WindowStateManager(Frame mainFrame, JInternalFrame logWindow, JInternalFrame gameWindow,
+        JInternalFrame coordinatesWindow)
     {
         this.mainFrame = mainFrame;
         this.logWindow = logWindow;
         this.gameWindow = gameWindow;
+        this.coordinatesWindow = coordinatesWindow;
     }
 
     static boolean hasSavedWindowState()
@@ -42,6 +46,7 @@ final class WindowStateManager
         restoreMainFrameState(props);
         restoreInternalFrameState(props, LOG_PREFIX, logWindow);
         restoreInternalFrameState(props, GAME_PREFIX, gameWindow);
+        restoreInternalFrameState(props, COORDS_PREFIX, coordinatesWindow);
     }
 
     void saveWindowState()
@@ -50,6 +55,7 @@ final class WindowStateManager
         saveMainFrameState(props);
         saveInternalFrameState(props, LOG_PREFIX, logWindow);
         saveInternalFrameState(props, GAME_PREFIX, gameWindow);
+        saveInternalFrameState(props, COORDS_PREFIX, coordinatesWindow);
         File file = getStateFile();
         try (FileOutputStream out = new FileOutputStream(file))
         {
