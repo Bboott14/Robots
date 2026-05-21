@@ -23,6 +23,10 @@ import log.Logger;
  */
 public class MainApplicationFrame extends JFrame
 {
+    private static final String LOG_WINDOW_KEY = "logWindow";
+    private static final String GAME_WINDOW_KEY = "gameWindow";
+    private static final String COORDS_WINDOW_KEY = "coordsWindow";
+
     private final JDesktopPane desktopPane = new JDesktopPane();  //главная панель, на которой располагаются внутренние окна приложения 
     private RobotModel robotModel;
     private LogWindow logWindow;
@@ -53,7 +57,10 @@ public class MainApplicationFrame extends JFrame
         coordinatesWindow = createCoordinatesWindow(robotModel);
         addWindow(coordinatesWindow);
 
-        windowStateManager = new WindowStateManager(this, logWindow, gameWindow, coordinatesWindow);
+        windowStateManager = new WindowStateManager(this);
+        windowStateManager.registerInternalFrame(LOG_WINDOW_KEY, logWindow);
+        windowStateManager.registerInternalFrame(GAME_WINDOW_KEY, gameWindow);
+        windowStateManager.registerInternalFrame(COORDS_WINDOW_KEY, coordinatesWindow);
         windowStateManager.restoreWindowState(); //восстанавливаем сохраненное состояние окон приложения
 
         MenuBuilder menuBuilder = new MenuBuilder(this, this::resetWindowState, this::exitRequested); //создаем объект MenuBuilder, который отвечает за создание меню приложения, передаем ему ссылки на методы для сброса состояния окон и выхода из приложения

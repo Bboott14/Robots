@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Properties;
 import javax.swing.JInternalFrame;
 
@@ -13,22 +15,17 @@ final class WindowStateManager
 {
     private static final String STATE_FILE_NAME = ".robots-ui.properties";
     private static final String MAIN_PREFIX = "main";
-    private static final String LOG_PREFIX = "logWindow";
-    private static final String GAME_PREFIX = "gameWindow";
-    private static final String COORDS_PREFIX = "coordsWindow";
-
     private final Frame mainFrame;
-    private final JInternalFrame logWindow;
-    private final JInternalFrame gameWindow;
-    private final JInternalFrame coordinatesWindow;
+    private final Map<String, JInternalFrame> internalFrames = new LinkedHashMap<>();
 
-    WindowStateManager(Frame mainFrame, JInternalFrame logWindow, JInternalFrame gameWindow,
-        JInternalFrame coordinatesWindow)
+    WindowStateManager(Frame mainFrame)
     {
         this.mainFrame = mainFrame;
-        this.logWindow = logWindow;
-        this.gameWindow = gameWindow;
-        this.coordinatesWindow = coordinatesWindow;
+    }
+
+    void registerInternalFrame(String key, JInternalFrame frame)
+    {
+        internalFrames.put(key, frame);
     }
 
     static boolean hasSavedWindowState()
@@ -44,18 +41,20 @@ final class WindowStateManager
             return;
         }
         restoreMainFrameState(props);
-        restoreInternalFrameState(props, LOG_PREFIX, logWindow);
-        restoreInternalFrameState(props, GAME_PREFIX, gameWindow);
-        restoreInternalFrameState(props, COORDS_PREFIX, coordinatesWindow);
+        for (Map.Entry<String, JInternalFrame> entry : internalFrames.entrySet())
+        {
+            restoreInternalFrameState(props, entry.getKey(), entry.getValue());
+        }
     }
 
     void saveWindowState()
     {
         Properties props = new Properties();
         saveMainFrameState(props);
-        saveInternalFrameState(props, LOG_PREFIX, logWindow);
-        saveInternalFrameState(props, GAME_PREFIX, gameWindow);
-        saveInternalFrameState(props, COORDS_PREFIX, coordinatesWindow);
+        for (Map.Entry<String, JInternalFrame> entry : internalFrames.entrySet())
+        {
+            saveInternalFrameState(props, entry.getKey(), entry.getValue());
+        }
         File file = getStateFile();
         try (FileOutputStream out = new FileOutputStream(file))
         {
