@@ -2,9 +2,12 @@ package gui;
 
 import java.awt.Point;
 import java.util.Observable;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class RobotModel extends Observable
 {
+    private static final int UPDATE_INTERVAL_MS = 10;
     private static final double MAX_VELOCITY = 0.1;
     private static final double MAX_ANGULAR_VELOCITY = 0.001;
     private static final double TARGET_EPSILON = 0.5;
@@ -16,6 +19,25 @@ public class RobotModel extends Observable
 
     private double targetX = 150;
     private double targetY = 100;
+    private Timer timer;
+
+    public static final class State
+    {
+        public final double positionX;
+        public final double positionY;
+        public final double direction;
+        public final double targetX;
+        public final double targetY;
+
+        public State(double positionX, double positionY, double direction, double targetX, double targetY)
+        {
+            this.positionX = positionX;
+            this.positionY = positionY;
+            this.direction = direction;
+            this.targetX = targetX;
+            this.targetY = targetY;
+        }
+    }
 
     public synchronized double getPositionX()
     {
@@ -42,14 +64,51 @@ public class RobotModel extends Observable
         return targetY;
     }
 
-    public void setTargetPosition(Point p)
+    public synchronized void start()
     {
+        if (timer != null)
+        {
+            return;
+        }
+        timer = new Timer("robot-model-update", true);
+        timer.schedule(new TimerTask()
+        {
+            @Override
+            public void run()
+            {
+                update(UPDATE_INTERVAL_MS);
+            }
+        }, 0, UPDATE_INTERVAL_MS);
+    }
+
+    public synchronized void stop()
+    {
+        if (timer == null)
+        {
+            return;
+        }
+        timer.cancel();
+        timer = null;
+    }
+
+    public State getState()
+    {
+        synchronized (this)
+        {
+            return new State(positionX, positionY, direction, targetX, targetY);
+        }
+    }
+
+    public void setTargetPosition(Point p) //устанавливает новую целевую позицию для робота, которая будет использоваться при обновлении его состояния
+    {
+        State snapshot;
         synchronized (this)
         {
             targetX = p.x;
             targetY = p.y;
+            snapshot = new State(positionX, positionY, direction, targetX, targetY);
         }
-        notifyChange();
+        notifyChange(snapshot);
     }
 
     public void update(double duration)
@@ -105,7 +164,7 @@ public class RobotModel extends Observable
             positionY = newY;
             direction = newDirection;
         }
-        notifyChange();
+        notifyChange(new State(newX, newY, newDirection, tx, ty));
     }
 
     private static double distance(double x1, double y1, double x2, double y2)
@@ -135,15 +194,15 @@ public class RobotModel extends Observable
         return angle;
     }
 
-    private static double shortestAngleDiff(double from, double to)
+    private static double shortestAngleDiff(double from, double to) //вычисляет кратчайшую разницу между двумя углами (from и to), учитывая циклическую природу углов, и возвращает результат в диапазоне от -π до π
     {
         double diff = to - from;
         return Math.atan2(Math.sin(diff), Math.cos(diff));
     }
 
-    private void notifyChange()
+    private void notifyChange(State state)
     {
         setChanged();
-        notifyObservers();
+        notifyObservers(state);
     }
 }

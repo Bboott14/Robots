@@ -47,6 +47,7 @@ public class MainApplicationFrame extends JFrame
         
         
         robotModel = new RobotModel();
+        robotModel.start();
 
         logWindow = createLogWindow(); //создаем окно для отображения логов приложения
         addWindow(logWindow);
@@ -178,6 +179,7 @@ public class MainApplicationFrame extends JFrame
             JOptionPane.QUESTION_MESSAGE); //показываем диалоговое окно с вопросом о подтверждении выхода из приложения и получаем выбор пользователя (да или нет)
         if (choice == JOptionPane.YES_OPTION)
         {
+            robotModel.stop();
             windowStateManager.saveWindowState(); //сохраняем состояние окон приложения 
             dispose();
             System.exit(0);

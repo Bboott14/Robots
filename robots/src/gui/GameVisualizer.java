@@ -8,43 +8,20 @@ import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.Observable;
+import java.util.Observer;
 import javax.swing.JPanel;
 
-public class GameVisualizer extends JPanel
+public class GameVisualizer extends JPanel implements Observer
 {
-    private static final int REDRAW_INTERVAL_MS = 50;
-    private static final int MODEL_UPDATE_INTERVAL_MS = 10;
-
-    private final Timer timer = initTimer(); //инициализируем таймер, который будет использоваться для генерации событий перерисовки панели и обновления модели робота
     private final RobotModel model;
-    
-    private static Timer initTimer() 
-    {
-        Timer timer = new Timer("events generator", true);
-        return timer;
-    }
+    private volatile RobotModel.State lastState;
     
     public GameVisualizer(RobotModel model) 
     {
         this.model = model;
-        timer.schedule(new TimerTask()
-        {
-            @Override
-            public void run()
-            {
-                onRedrawEvent(); //запускаем таймер, который будет вызывать событие перерисовки панели каждые 50 миллисекунд
-            }
-        }, 0, REDRAW_INTERVAL_MS);
-        timer.schedule(new TimerTask()
-        {
-            @Override
-            public void run()
-            {
-                onModelUpdateEvent(); //запускаем таймер, который будет вызывать событие обновления модели робота каждые 10 миллисекунд
-            }
-        }, 0, MODEL_UPDATE_INTERVAL_MS);
+        this.lastState = model.getState();
+        model.addObserver(this);
         addMouseListener(new MouseAdapter()
         {
             @Override
@@ -62,33 +39,37 @@ public class GameVisualizer extends JPanel
         model.setTargetPosition(p);
     }
     
-    protected void onRedrawEvent()
-    {
-        EventQueue.invokeLater(this::repaint);
-    }
-
-    protected void onModelUpdateEvent()
-    {
-        model.update(MODEL_UPDATE_INTERVAL_MS);
-    }
-    
     private static int round(double value)
     {
         return (int)(value + 0.5);
     }
     
     @Override
+    public void update(Observable o, Object arg)
+    {
+        if (arg instanceof RobotModel.State)
+        {
+            lastState = (RobotModel.State) arg;
+        }
+        else
+        {
+            lastState = model.getState();
+        }
+        EventQueue.invokeLater(this::repaint);
+    }
+
+    @Override
     public void paint(Graphics g)
     {
         super.paint(g);
         Graphics2D g2d = (Graphics2D)g; 
-        double robotX = model.getPositionX();
-        double robotY = model.getPositionY();
-        double direction = model.getDirection();
-        double targetX = model.getTargetX();
-        double targetY = model.getTargetY();
-        drawRobot(g2d, round(robotX), round(robotY), direction);
-        drawTarget(g2d, round(targetX), round(targetY));
+        RobotModel.State state = lastState;
+        if (state == null)
+        {
+            state = model.getState();
+        }
+        drawRobot(g2d, round(state.positionX), round(state.positionY), state.direction);
+        drawTarget(g2d, round(state.targetX), round(state.targetY));
     }
     
     private static void fillOval(Graphics g, int centerX, int centerY, int diam1, int diam2)
