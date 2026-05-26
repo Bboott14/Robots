@@ -5,6 +5,8 @@ import java.awt.EventQueue;
 import java.awt.TextArea;
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
 import log.LogChangeListener;
 import log.LogEntry;
 import log.LogWindowSource;
@@ -19,6 +21,15 @@ public class LogWindow extends JInternalFrame implements LogChangeListener
         super("Протокол работы", true, true, true, true);
         m_logSource = logSource;
         m_logSource.registerListener(this); //регистрируем окно в качестве слушателя изменений в источнике логов, чтобы получать уведомления о новых записях в логе и обновлять отображаемое содержимое
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        addInternalFrameListener(new InternalFrameAdapter()
+        {
+            @Override
+            public void internalFrameClosed(InternalFrameEvent e)
+            {
+                m_logSource.unregisterListener(LogWindow.this);
+            }
+        });
         m_logContent = new TextArea(""); 
         m_logContent.setSize(200, 500);
         
